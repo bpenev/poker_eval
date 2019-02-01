@@ -9,10 +9,10 @@ enum Suit {
 impl Suit {
 	fn to_string(&self) -> &str {
 		match self {
-			Suit::CLUBS => "c",
-			Suit::DIAMONDS => "d",
-			Suit::HEARTS => "h",
-			Suit::SPADES => "s"
+			Suit::CLUBS => 		"c",
+			Suit::DIAMONDS => 	"d",
+			Suit::HEARTS => 	"h",
+			Suit::SPADES => 	"s"
 		}
 	}
 }
@@ -36,19 +36,19 @@ enum Rank {
 impl Rank {
 	fn to_string(&self) -> &str {
 		match self {
-			Rank::TWO => "2",
-			Rank::THREE => "3",
-			Rank::FOUR => "4",
-			Rank::FIVE => "5",
-			Rank::SIX => "6",
-			Rank::SEVEN => "7",
-			Rank::EIGHT => "8",
-			Rank::NINE => "9",
-			Rank::TEN => "T",
-			Rank::JACK => "J",
-			Rank::QUEEN => "Q",
-			Rank::KING => "K",
-			Rank::ACE => "A"
+			Rank::TWO => 	"2",
+			Rank::THREE => 	"3",
+			Rank::FOUR => 	"4",
+			Rank::FIVE => 	"5",
+			Rank::SIX => 	"6",
+			Rank::SEVEN => 	"7",
+			Rank::EIGHT => 	"8",
+			Rank::NINE => 	"9",
+			Rank::TEN => 	"T",
+			Rank::JACK => 	"J",
+			Rank::QUEEN => 	"Q",
+			Rank::KING => 	"K",
+			Rank::ACE => 	"A"
 		}
 	}
 }
@@ -59,33 +59,35 @@ struct Card {
 }
 
 impl Card {
-	fn to_int32(&self) -> u32 {
-		let mut bint = 0b0000_0000000000000u32;
+	fn to_byte_int(&self) -> (u8, u16) {
+		let mut byte_int_suit = 0b0000u8;
+		let mut byte_int_rank = 0b0000000000000u16;
+
 		
 		match self.suit {
-			Suit::CLUBS => 		{bint |= 0b1000_0000000000000u32;},
-			Suit::DIAMONDS => 	{bint |= 0b0100_0000000000000u32;},
-			Suit::HEARTS => 	{bint |= 0b0010_0000000000000u32;},
-			Suit::SPADES => 	{bint |= 0b0001_0000000000000u32;}
+			Suit::CLUBS => 		{byte_int_suit |= 0b1000u8;},
+			Suit::DIAMONDS => 	{byte_int_suit |= 0b0100u8;},
+			Suit::HEARTS => 	{byte_int_suit |= 0b0010u8;},
+			Suit::SPADES => 	{byte_int_suit |= 0b0001u8;}
 		}
 		
 		match self.rank {
-			Rank::TWO => 	{bint |= 0b0000_1000000000000u32;},
-			Rank::THREE => 	{bint |= 0b0000_0100000000000u32;},
-			Rank::FOUR => 	{bint |= 0b0000_0010000000000u32;},
-			Rank::FIVE => 	{bint |= 0b0000_0001000000000u32;},
-			Rank::SIX => 	{bint |= 0b0000_0000100000000u32;},
-			Rank::SEVEN => 	{bint |= 0b0000_0000010000000u32;},
-			Rank::EIGHT => 	{bint |= 0b0000_0000001000000u32;},
-			Rank::NINE => 	{bint |= 0b0000_0000000100000u32;},
-			Rank::TEN => 	{bint |= 0b0000_0000000010000u32;},
-			Rank::JACK => 	{bint |= 0b0000_0000000001000u32;},
-			Rank::QUEEN => 	{bint |= 0b0000_0000000000100u32;},
-			Rank::KING => 	{bint |= 0b0000_0000000000010u32;},
-			Rank::ACE => 	{bint |= 0b0000_0000000000001u32;}
+			Rank::TWO => 	{byte_int_rank |= 0b1000000000000u16;},
+			Rank::THREE => 	{byte_int_rank |= 0b0100000000000u16;},
+			Rank::FOUR => 	{byte_int_rank |= 0b0010000000000u16;},
+			Rank::FIVE => 	{byte_int_rank |= 0b0001000000000u16;},
+			Rank::SIX => 	{byte_int_rank |= 0b0000100000000u16;},
+			Rank::SEVEN => 	{byte_int_rank |= 0b0000010000000u16;},
+			Rank::EIGHT => 	{byte_int_rank |= 0b0000001000000u16;},
+			Rank::NINE => 	{byte_int_rank |= 0b0000000100000u16;},
+			Rank::TEN => 	{byte_int_rank |= 0b0000000010000u16;},
+			Rank::JACK => 	{byte_int_rank |= 0b0000000001000u16;},
+			Rank::QUEEN => 	{byte_int_rank |= 0b0000000000100u16;},
+			Rank::KING => 	{byte_int_rank |= 0b0000000000010u16;},
+			Rank::ACE => 	{byte_int_rank |= 0b0000000000001u16;}
 		}
 		
-		return bint;
+		return (byte_int_suit, byte_int_rank);
 	}
 	
 	fn to_string(&self) -> String {
@@ -94,140 +96,74 @@ impl Card {
 }
 
 struct Hand {
-	c1: Card,
-	c2: Card,
-	c3: Option<Card>,
-	c4: Option<Card>,
-	c5: Option<Card>,
-	c6: Option<Card>,
-	c7: Option<Card>
+	cards: [Option<Card>; 7]
 }
 
 impl Hand {
-	fn new(c1: Card, c2: Card) -> Hand {
+	fn new() -> Hand {
 		Hand {
-			c1,
-			c2,
-			c3: None,
-			c4: None,
-			c5: None,
-			c6: None,
-			c7: None
+			cards: [None, None, None, None, None, None, None]
 		}
 	}
-	
-	fn add_c3(mut self, c3: Card) -> Hand {
-		self.c3 = Some(c3);
-		self
+
+	fn get_cards(&self) -> &[Option<Card>; 7] {
+		&self.cards
 	}
-	
-	fn add_c4(mut self, c4: Card) -> Hand {
-		self.c4 = Some(c4);
-		self
-	}
-	
-	fn add_c5(mut self, c5: Card) -> Hand {
-		self.c5 = Some(c5);
-		self
-	}
-	
-	fn add_c6(mut self, c6: Card) -> Hand {
-		self.c6 = Some(c6);
-		self
-	}
-	
-	fn add_c7(mut self, c7: Card) -> Hand {
-		self.c7 = Some(c7);
-		self
+
+	fn set_cards(&mut self, cards: [Option<Card>; 7]) {
+		self.cards = cards;
 	}
 	
 	fn get_card_count(&self) -> u8 {
-		2 +
-		match self.c3 {
-			None => 0,
-			_ => 1
-		} +
-		match self.c4 {
-			None => 0,
-			_ => 1
-		} +
-		match self.c5 {
-			None => 0,
-			_ => 1
-		} +
-		match self.c6 {
-			None => 0,
-			_ => 1
-		} +
-		match self.c7 {
-			None => 0,
-			_ => 1
+		let mut count = 0;
+		for card in &self.cards {
+			match card {
+				None => continue,
+				_ => {count += 1;}
+			}
 		}
+
+		return count;
 	}
-	
+
 	fn get_first_five_card_count(&self) -> u8 {
-		2 +
-		match self.c3 {
-			None => 0,
-			_ => 1
-		} +
-		match self.c4 {
-			None => 0,
-			_ => 1
-		} +
-		match self.c5 {
-			None => 0,
-			_ => 1
+		let mut count = 0;
+		let mut i = 0;
+		while i < 5 {
+			match &self.cards[i] {
+				None => continue,
+				_ => {count += 1;}
+			}
+
+			i += 1;
 		}
+
+		return count;
 	}
 	
 	fn to_string(&self) -> String {
-		let mut c3 = "".to_string();
-		if let Some(c) = &self.c3 {	
-			c3 = format!(" {}", c.to_string());
-		};
-		
-		let mut c4 = "".to_string();
-		if let Some(c) = &self.c4 {	
-			c4 = format!(" {}", c.to_string());
-		};
-		
-		let mut c5 = "".to_string();
-		if let Some(c) = &self.c5 {	
-			c5 = format!(" {}", c.to_string());
-		};
-		
-		let mut c6 = "".to_string();
-		if let Some(c) = &self.c6 {	
-			c6 = format!(" {}", c.to_string());
-		};
-		
-		let mut c7 = "".to_string();
-		if let Some(c) = &self.c7 {	
-			c7 = format!(" {}", c.to_string());
-		};
-	
-		return 
-			format!("{}", self.c1.to_string()) + 
-			&format!(" {}", self.c2.to_string()) +
-			&c3 + &c4 + &c5 + &c6 + &c7;
-			
+		let mut result_string = "".to_string();
+		let mut space = "".to_string();
+		for card in &self.cards {
+			match card {
+				None => continue,
+				_ => {result_string += &(space + &card.as_ref().unwrap().to_string());}
+			}
+			space = " ".to_string();
+		}
+
+		return result_string;
 	}
 }
 
 fn check_royal_flush(hand: &Hand) -> bool {
+	let cards = hand.get_cards();
+
 	if hand.get_first_five_card_count() != 5 || 
 		hand.get_card_count() != 5 {
 		panic!("First five cards in hand must be set and the rest not set to check for existing combinations");
 	} else {
-		if (&hand.c1.suit == &hand.c2.suit) && 
-			(&hand.c1.suit != &hand.c3.as_ref().unwrap().suit) &&
-			(&hand.c1.suit != &hand.c4.as_ref().unwrap().suit) &&
-			(&hand.c1.suit != &hand.c5.as_ref().unwrap().suit) {
-			return true;
-		} else {
-			return false;
-		}
+		return false;
 	}
 }
 
@@ -236,34 +172,44 @@ fn get_best_hand(hand: Hand) -> Hand {
 }
 
 fn main() {
-	let h = Hand::new(
-		Card {
-			suit: Suit::DIAMONDS,
-			rank: Rank::ACE
-		},
-		Card {
-			suit: Suit::CLUBS,
-			rank: Rank::ACE
-		}
-	)
-	.add_c3(
-		Card {
-			suit: Suit::SPADES,
-			rank: Rank::ACE
-		}
-	)
-	.add_c4(
-		Card {
-			suit: Suit::HEARTS,
-			rank: Rank::ACE
-		}
-	)
-	.add_c5(
-		Card {
-			suit: Suit::DIAMONDS,
-			rank: Rank::KING
-		}
-	);
+	let mut h = Hand::new();
+
+	let current_hand_cards = [
+		Some(
+			Card {
+				suit: Suit::DIAMONDS,
+				rank: Rank::ACE
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::CLUBS,
+				rank: Rank::ACE
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::SPADES,
+				rank: Rank::ACE
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::HEARTS,
+				rank: Rank::ACE
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::DIAMONDS,
+				rank: Rank::KING
+			}
+		),
+		None,
+		None
+	];
+
+	h.set_cards(current_hand_cards);
 	
 	let h = get_best_hand(h);
 	
