@@ -65,26 +65,26 @@ impl Card {
 
 		
 		match self.suit {
-			Suit::CLUBS => 		{byte_int_suit |= 0b1000u8;},
-			Suit::DIAMONDS => 	{byte_int_suit |= 0b0100u8;},
-			Suit::HEARTS => 	{byte_int_suit |= 0b0010u8;},
-			Suit::SPADES => 	{byte_int_suit |= 0b0001u8;}
+			Suit::CLUBS => 		{byte_int_suit |= 0b0001u8;},
+			Suit::DIAMONDS => 	{byte_int_suit |= 0b0010u8;},
+			Suit::HEARTS => 	{byte_int_suit |= 0b0100u8;},
+			Suit::SPADES => 	{byte_int_suit |= 0b1000u8;}
 		}
 		
 		match self.rank {
-			Rank::TWO => 	{byte_int_rank |= 0b1000000000000000u16;},
-			Rank::THREE => 	{byte_int_rank |= 0b0100000000000000u16;},
-			Rank::FOUR => 	{byte_int_rank |= 0b0010000000000000u16;},
-			Rank::FIVE => 	{byte_int_rank |= 0b0001000000000000u16;},
-			Rank::SIX => 	{byte_int_rank |= 0b0000100000000000u16;},
-			Rank::SEVEN => 	{byte_int_rank |= 0b0000010000000000u16;},
-			Rank::EIGHT => 	{byte_int_rank |= 0b0000001000000000u16;},
-			Rank::NINE => 	{byte_int_rank |= 0b0000000100000000u16;},
-			Rank::TEN => 	{byte_int_rank |= 0b0000000010000000u16;},
-			Rank::JACK => 	{byte_int_rank |= 0b0000000001000000u16;},
-			Rank::QUEEN => 	{byte_int_rank |= 0b0000000000100000u16;},
-			Rank::KING => 	{byte_int_rank |= 0b0000000000010000u16;},
-			Rank::ACE => 	{byte_int_rank |= 0b0000000000001000u16;}
+			Rank::TWO => 	{byte_int_rank |= 0b0000000000001u16;},
+			Rank::THREE => 	{byte_int_rank |= 0b0000000000010u16;},
+			Rank::FOUR => 	{byte_int_rank |= 0b0000000000100u16;},
+			Rank::FIVE => 	{byte_int_rank |= 0b0000000001000u16;},
+			Rank::SIX => 	{byte_int_rank |= 0b0000000010000u16;},
+			Rank::SEVEN => 	{byte_int_rank |= 0b0000000100000u16;},
+			Rank::EIGHT => 	{byte_int_rank |= 0b0000001000000u16;},
+			Rank::NINE => 	{byte_int_rank |= 0b0000010000000u16;},
+			Rank::TEN => 	{byte_int_rank |= 0b0000100000000u16;},
+			Rank::JACK => 	{byte_int_rank |= 0b0001000000000u16;},
+			Rank::QUEEN => 	{byte_int_rank |= 0b0010000000000u16;},
+			Rank::KING => 	{byte_int_rank |= 0b0100000000000u16;},
+			Rank::ACE => 	{byte_int_rank |= 0b1000000000000u16;}
 		}
 		
 		return (byte_int_suit, byte_int_rank);
@@ -186,7 +186,7 @@ fn check_flush(hand: &Hand) -> bool {
 fn check_straight(hand: &Hand) -> bool {
 	let cards = hand.get_cards();
 
-	let mut rank_bytes = 0b0000000000000000u16;
+	let mut rank_bytes = 0b0000000000000u16;
 	let mut i = 0;
 	while i < 5 {
 		let card_byte_int = cards[i].as_ref().unwrap().to_byte_int();
@@ -194,20 +194,20 @@ fn check_straight(hand: &Hand) -> bool {
 		i += 1;
 	}
 
-	let mut straight_pattern = 0b1111100000000000u16;
+	let mut straight_pattern = 0b0000000011111u16;
 	let mut j = 0;
 	while j < 9 {
 		if rank_bytes == straight_pattern {
 			return true;
 		} else {
-			straight_pattern = straight_pattern >> 1;
+			straight_pattern = straight_pattern << 1;
 		}
 
 		j += 1;
 	}
 
 	// ACE as ONE
-	if rank_bytes == 0b1111000000001000u16 {
+	if rank_bytes == 0b1000000001111u16 {
 		return true;
 	}
 
@@ -216,13 +216,13 @@ fn check_straight(hand: &Hand) -> bool {
 
 fn get_high_card(hand: &Hand) -> &Option<Card> {
 	let cards = hand.get_cards();
-	let mut max_card_rank_bits = 0b100000000000000u16;
+	let mut max_card_rank_bits = 0b000000000000u16;
 	let mut max_card = &cards[0];
 
 	for card in cards {
 		if let Some(c) = card {
 			let card_byte_rank = c.to_byte_int().1;
-			if card_byte_rank < max_card_rank_bits {
+			if card_byte_rank > max_card_rank_bits {
 				max_card_rank_bits = card_byte_rank;
 				max_card = card;
 			}
@@ -230,6 +230,30 @@ fn get_high_card(hand: &Hand) -> &Option<Card> {
 	}
 
 	return max_card;
+}
+
+fn check_repeating_cards(hand: &Hand) -> bool {
+	let cards = hand.get_cards();
+	let mut suit_bytes = 0b0000u8;
+	let mut rank_bytes = 0b0000000000000u16;
+
+	for card in cards {
+		if let Some(c) = card {
+			let card_byte_int = c.to_byte_int();
+			if suit_bytes | card_byte_int.0 == suit_bytes {
+				if rank_bytes | card_byte_int.1 == rank_bytes {
+					return true;
+				} else {
+					rank_bytes |= card_byte_int.1;
+				}
+			} else {
+				suit_bytes |= card_byte_int.0;
+				rank_bytes |= card_byte_int.1;
+			}
+		}
+	}
+
+	return false;
 }
 
 fn get_best_hand(hand: Hand) -> Hand {
@@ -255,7 +279,7 @@ fn main() {
 		Some(
 			Card {
 				suit: Suit::DIAMONDS,
-				rank: Rank::ACE
+				rank: Rank::THREE
 			}
 		),
 		Some(
@@ -266,8 +290,8 @@ fn main() {
 		),
 		Some(
 			Card {
-				suit: Suit::DIAMONDS,
-				rank: Rank::SEVEN
+				suit: Suit::HEARTS,
+				rank: Rank::SIX
 			}
 		),
 		None,
@@ -278,14 +302,26 @@ fn main() {
 	
 	let h = get_best_hand(h);
 	
-	if check_straight_flush(&h) {
-		println!("Straight Flush");
+	if check_repeating_cards(&h) {
+		println!("Repeating cards!");
+	} else {
+		if check_straight(&h) {
+			println!("Straight");
+		}
+
+		if check_flush(&h) {
+			println!("Flush");
+		}
+
+		if check_straight_flush(&h) {
+			println!("Straight Flush");
+		}
+
+		if let Some(hc) = get_high_card(&h) {
+			println!("High Card: {}", hc.to_string());
+		}
 	}
 	
-	println!("{}", h.to_string());
-	println!("{}", h.get_card_count());
-
-	if let Some(hc) = get_high_card(&h) {
-		println!("{}", hc.to_string());
-	}
+	println!("Hand: {}", h.to_string());
+	println!("Card Count: {}", h.get_card_count());
 }
