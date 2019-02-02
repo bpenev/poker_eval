@@ -72,19 +72,19 @@ impl Card {
 		}
 		
 		match self.rank {
-			Rank::TWO => 	{byte_int_rank |= 0b1000000000000u16;},
-			Rank::THREE => 	{byte_int_rank |= 0b0100000000000u16;},
-			Rank::FOUR => 	{byte_int_rank |= 0b0010000000000u16;},
-			Rank::FIVE => 	{byte_int_rank |= 0b0001000000000u16;},
-			Rank::SIX => 	{byte_int_rank |= 0b0000100000000u16;},
-			Rank::SEVEN => 	{byte_int_rank |= 0b0000010000000u16;},
-			Rank::EIGHT => 	{byte_int_rank |= 0b0000001000000u16;},
-			Rank::NINE => 	{byte_int_rank |= 0b0000000100000u16;},
-			Rank::TEN => 	{byte_int_rank |= 0b0000000010000u16;},
-			Rank::JACK => 	{byte_int_rank |= 0b0000000001000u16;},
-			Rank::QUEEN => 	{byte_int_rank |= 0b0000000000100u16;},
-			Rank::KING => 	{byte_int_rank |= 0b0000000000010u16;},
-			Rank::ACE => 	{byte_int_rank |= 0b0000000000001u16;}
+			Rank::TWO => 	{byte_int_rank |= 0b1000000000000000u16;},
+			Rank::THREE => 	{byte_int_rank |= 0b0100000000000000u16;},
+			Rank::FOUR => 	{byte_int_rank |= 0b0010000000000000u16;},
+			Rank::FIVE => 	{byte_int_rank |= 0b0001000000000000u16;},
+			Rank::SIX => 	{byte_int_rank |= 0b0000100000000000u16;},
+			Rank::SEVEN => 	{byte_int_rank |= 0b0000010000000000u16;},
+			Rank::EIGHT => 	{byte_int_rank |= 0b0000001000000000u16;},
+			Rank::NINE => 	{byte_int_rank |= 0b0000000100000000u16;},
+			Rank::TEN => 	{byte_int_rank |= 0b0000000010000000u16;},
+			Rank::JACK => 	{byte_int_rank |= 0b0000000001000000u16;},
+			Rank::QUEEN => 	{byte_int_rank |= 0b0000000000100000u16;},
+			Rank::KING => 	{byte_int_rank |= 0b0000000000010000u16;},
+			Rank::ACE => 	{byte_int_rank |= 0b0000000000001000u16;}
 		}
 		
 		return (byte_int_suit, byte_int_rank);
@@ -156,7 +156,7 @@ impl Hand {
 	}
 }
 
-fn check_royal_flush(hand: &Hand) -> bool {
+fn check_straight_flush(hand: &Hand) -> bool {
 	if hand.get_first_five_card_count() != 5 || 
 		hand.get_card_count() != 5 {
 		panic!("First five cards in hand must be set and the rest not set to check for existing combinations");
@@ -184,7 +184,52 @@ fn check_flush(hand: &Hand) -> bool {
 }
 
 fn check_straight(hand: &Hand) -> bool {
+	let cards = hand.get_cards();
+
+	let mut rank_bytes = 0b0000000000000000u16;
+	let mut i = 0;
+	while i < 5 {
+		let card_byte_int = cards[i].as_ref().unwrap().to_byte_int();
+		rank_bytes |= card_byte_int.1;
+		i += 1;
+	}
+
+	let mut straight_pattern = 0b1111100000000000u16;
+	let mut j = 0;
+	while j < 9 {
+		if rank_bytes == straight_pattern {
+			return true;
+		} else {
+			straight_pattern = straight_pattern >> 1;
+		}
+
+		j += 1;
+	}
+
+	// ACE as ONE
+	if rank_bytes == 0b1111000000001000u16 {
+		return true;
+	}
+
 	return false;
+}
+
+fn get_high_card(hand: &Hand) -> &Option<Card> {
+	let cards = hand.get_cards();
+	let mut max_card_rank_bits = 0b100000000000000u16;
+	let mut max_card = &cards[0];
+
+	for card in cards {
+		if let Some(c) = card {
+			let card_byte_rank = c.to_byte_int().1;
+			if card_byte_rank < max_card_rank_bits {
+				max_card_rank_bits = card_byte_rank;
+				max_card = card;
+			}
+		}
+	}
+
+	return max_card;
 }
 
 fn get_best_hand(hand: Hand) -> Hand {
@@ -198,31 +243,31 @@ fn main() {
 		Some(
 			Card {
 				suit: Suit::DIAMONDS,
+				rank: Rank::SIX
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::DIAMONDS,
+				rank: Rank::TWO
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::DIAMONDS,
 				rank: Rank::ACE
 			}
 		),
 		Some(
 			Card {
 				suit: Suit::DIAMONDS,
-				rank: Rank::KING
+				rank: Rank::FOUR
 			}
 		),
 		Some(
 			Card {
 				suit: Suit::DIAMONDS,
-				rank: Rank::QUEEN
-			}
-		),
-		Some(
-			Card {
-				suit: Suit::DIAMONDS,
-				rank: Rank::JACK
-			}
-		),
-		Some(
-			Card {
-				suit: Suit::DIAMONDS,
-				rank: Rank::NINE
+				rank: Rank::SEVEN
 			}
 		),
 		None,
@@ -233,10 +278,14 @@ fn main() {
 	
 	let h = get_best_hand(h);
 	
-	if check_royal_flush(&h) {
-		println!("Royal Flush");
+	if check_straight_flush(&h) {
+		println!("Straight Flush");
 	}
 	
 	println!("{}", h.to_string());
 	println!("{}", h.get_card_count());
+
+	if let Some(hc) = get_high_card(&h) {
+		println!("{}", hc.to_string());
+	}
 }
