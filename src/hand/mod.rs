@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::cmp::Ordering;
 
 #[cfg(test)]
 mod tests;
@@ -24,7 +25,7 @@ impl Suit {
 }
 
 #[allow(dead_code)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
 pub enum Rank {
 	TWO,
 	THREE,
@@ -135,6 +136,32 @@ impl Card {
 		return format!("{}{}", self.rank.to_string(), self.suit.to_string());
 	}
 }
+
+impl Ord for Card {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.rank > other.rank {
+        	return Ordering::Greater;
+        } else if self.rank < other.rank {
+        	return Ordering::Less;
+        } else {
+        	return Ordering::Equal;
+        }
+    }
+}
+
+impl PartialOrd for Card {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Card {
+    fn eq(&self, other: &Self) -> bool {
+        return self.suit == other.suit && self.rank == other.rank;
+    }
+}
+
+impl Eq for Card { }
 
 pub struct Hand {
 	pub cards: [Card; 5]
@@ -290,3 +317,23 @@ impl Hand {
 		return (false, Rank::TWO);
 	}
 }
+
+// impl Ord for Hand {
+//    fn cmp(&self, other: &Self) -> Ordering {
+       
+//    }
+// }
+
+//impl PartialOrd for Hand {
+//    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+//        
+//    }
+//}
+
+impl PartialEq for Hand {
+   fn eq(&self, other: &Self) -> bool {
+       self.cards.iter().zip(other.cards.iter()).all(|(a,b)| a == b)
+   }
+}
+
+impl Eq for Hand { }
