@@ -3,7 +3,7 @@ mod hand;
 use hand::Hand;
 
 fn main() {
-	let h = Hand::new_from_string("6c 6s 8h 7d 7h".to_string());
+	let h = Hand::new_from_string("6c 6s 8h 8d 8c".to_string());
 	
 	println!("Hand: {}", h.to_string());
 
@@ -11,13 +11,13 @@ fn main() {
 		println!("Repeating cards!");
 	} else {
 		if h.check_flush() {
-			if h.check_straight() {
+			if h.check_straight().0 {
 				println!("Straight Flush");
 			} else {
 				println!("Flush");
 			}
 		} else {
-			if h.check_straight() {
+			if h.check_straight().0 {
 				println!("Straight");
 			} else {
 				let same_kind = h.check_same_kind();

@@ -4,7 +4,7 @@ use std::collections::HashSet;
 mod tests;
 
 #[allow(dead_code)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Suit {
 	CLUBS,
 	DIAMONDS,
@@ -24,7 +24,7 @@ impl Suit {
 }
 
 #[allow(dead_code)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Rank {
 	TWO,
 	THREE,
@@ -250,7 +250,7 @@ impl Hand {
 		return true;
 	}
 
-	pub fn check_straight(&self) -> bool {
+	pub fn check_straight(&self) -> (bool, Rank) {
 		let mut rank_bytes = 0u16;
 
 		for card in &self.cards {
@@ -262,7 +262,19 @@ impl Hand {
 		let mut j = 0;
 		while j < 9 {
 			if rank_bytes == straight_pattern {
-				return true;
+				return (true, match j {
+						0 => Rank::SIX,
+						1 => Rank::SEVEN,
+						2 => Rank::EIGHT,
+						3 => Rank::NINE,
+						4 => Rank::TEN,
+						5 => Rank::JACK,
+						6 => Rank::QUEEN,
+						7 => Rank::KING,
+						8 => Rank::ACE,
+						_ => Rank::TWO
+					}
+				);
 			} else {
 				straight_pattern = straight_pattern << 1;
 			}
@@ -272,9 +284,9 @@ impl Hand {
 
 		// ACE as ONE
 		if rank_bytes == 0b1000000001111u16 {
-			return true;
+			return (true, Rank::ACE);
 		}
 
-		return false;
+		return (false, Rank::TWO);
 	}
 }
