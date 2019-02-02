@@ -114,6 +114,20 @@ impl Hand {
 		self.cards = cards;
 	}
 	
+	fn to_string(&self) -> String {
+		let mut result_string = "".to_string();
+		let mut space = "".to_string();
+		for card in &self.cards {
+			match card {
+				None => continue,
+				_ => {result_string += &(space + &card.as_ref().unwrap().to_string());}
+			}
+			space = " ".to_string();
+		}
+
+		return result_string;
+	}
+
 	fn get_card_count(&self) -> u8 {
 		let mut count = 0;
 		for card in &self.cards {
@@ -140,124 +154,101 @@ impl Hand {
 
 		return count;
 	}
-	
-	fn to_string(&self) -> String {
-		let mut result_string = "".to_string();
-		let mut space = "".to_string();
-		for card in &self.cards {
-			match card {
-				None => continue,
-				_ => {result_string += &(space + &card.as_ref().unwrap().to_string());}
+
+	fn check_flush(&self) -> bool {
+		let cards = self.get_cards();
+
+		let mut suit_bytes = 0b0000u8;
+		let mut i = 0;
+		while i < 5 {
+			let card_byte_int = cards[i].as_ref().unwrap().to_byte_int();
+			suit_bytes |= card_byte_int.0;
+			if suit_bytes != card_byte_int.0 {
+				return false;
 			}
-			space = " ".to_string();
+
+			i += 1;
 		}
 
-		return result_string;
-	}
-}
-
-fn check_straight_flush(hand: &Hand) -> bool {
-	if hand.get_first_five_card_count() != 5 || 
-		hand.get_card_count() != 5 {
-		panic!("First five cards in hand must be set and the rest not set to check for existing combinations");
-	} else {
-		return check_flush(hand) && check_straight(hand);
-	}
-}
-
-fn check_flush(hand: &Hand) -> bool {
-	let cards = hand.get_cards();
-
-	let mut suit_bytes = 0b0000u8;
-	let mut i = 0;
-	while i < 5 {
-		let card_byte_int = cards[i].as_ref().unwrap().to_byte_int();
-		suit_bytes |= card_byte_int.0;
-		if suit_bytes != card_byte_int.0 {
-			return false;
-		}
-
-		i += 1;
-	}
-
-	return true;
-}
-
-fn check_straight(hand: &Hand) -> bool {
-	let cards = hand.get_cards();
-
-	let mut rank_bytes = 0b0000000000000u16;
-	let mut i = 0;
-	while i < 5 {
-		let card_byte_int = cards[i].as_ref().unwrap().to_byte_int();
-		rank_bytes |= card_byte_int.1;
-		i += 1;
-	}
-
-	let mut straight_pattern = 0b0000000011111u16;
-	let mut j = 0;
-	while j < 9 {
-		if rank_bytes == straight_pattern {
-			return true;
-		} else {
-			straight_pattern = straight_pattern << 1;
-		}
-
-		j += 1;
-	}
-
-	// ACE as ONE
-	if rank_bytes == 0b1000000001111u16 {
 		return true;
 	}
 
-	return false;
-}
+	fn check_straight(&self) -> bool {
+		let cards = self.get_cards();
 
-fn get_high_card(hand: &Hand) -> &Option<Card> {
-	let cards = hand.get_cards();
-	let mut max_card_rank_bits = 0b000000000000u16;
-	let mut max_card = &cards[0];
-
-	for card in cards {
-		if let Some(c) = card {
-			let card_byte_rank = c.to_byte_int().1;
-			if card_byte_rank > max_card_rank_bits {
-				max_card_rank_bits = card_byte_rank;
-				max_card = card;
-			}
+		let mut rank_bytes = 0b0000000000000u16;
+		let mut i = 0;
+		while i < 5 {
+			let card_byte_int = cards[i].as_ref().unwrap().to_byte_int();
+			rank_bytes |= card_byte_int.1;
+			i += 1;
 		}
+
+		let mut straight_pattern = 0b0000000011111u16;
+		let mut j = 0;
+		while j < 9 {
+			if rank_bytes == straight_pattern {
+				return true;
+			} else {
+				straight_pattern = straight_pattern << 1;
+			}
+
+			j += 1;
+		}
+
+		// ACE as ONE
+		if rank_bytes == 0b1000000001111u16 {
+			return true;
+		}
+
+		return false;
 	}
 
-	return max_card;
-}
+	fn get_high_card(&self) -> &Option<Card> {
+		let cards = self.get_cards();
+		let mut max_card_rank_bits = 0b000000000000u16;
+		let mut max_card = &cards[0];
 
-fn check_repeating_cards(hand: &Hand) -> bool {
-	let cards = hand.get_cards();
-	let mut suit_bytes = 0b0000u8;
-	let mut rank_bytes = 0b0000000000000u16;
+		for card in cards {
+			if let Some(c) = card {
+				let card_byte_rank = c.to_byte_int().1;
+				if card_byte_rank > max_card_rank_bits {
+					max_card_rank_bits = card_byte_rank;
+					max_card = card;
+				}
+			}
+		}
 
-	for card in cards {
-		if let Some(c) = card {
-			let card_byte_int = c.to_byte_int();
-			if suit_bytes | card_byte_int.0 == suit_bytes {
-				if rank_bytes | card_byte_int.1 == rank_bytes {
-					return true;
+		return max_card;
+	}
+
+	fn check_repeating_cards(&self) -> bool {
+		let cards = self.get_cards();
+		let mut suit_bytes = 0b0000u8;
+		let mut rank_bytes = 0b0000000000000u16;
+
+		for card in cards {
+			if let Some(c) = card {
+				let card_byte_int = c.to_byte_int();
+				if suit_bytes | card_byte_int.0 == suit_bytes {
+					if rank_bytes | card_byte_int.1 == rank_bytes {
+						return true;
+					} else {
+						rank_bytes |= card_byte_int.1;
+					}
 				} else {
+					suit_bytes |= card_byte_int.0;
 					rank_bytes |= card_byte_int.1;
 				}
-			} else {
-				suit_bytes |= card_byte_int.0;
-				rank_bytes |= card_byte_int.1;
 			}
 		}
+
+		return false;
 	}
 
-	return false;
-}
-
-fn get_best_hand(hand: Hand) -> Hand {
-	return hand;
+	fn get_best_hand(&self) -> &Hand {
+		return self;
+	}
 }
 
 fn main() {
@@ -290,8 +281,8 @@ fn main() {
 		),
 		Some(
 			Card {
-				suit: Suit::HEARTS,
-				rank: Rank::SIX
+				suit: Suit::DIAMONDS,
+				rank: Rank::FIVE
 			}
 		),
 		None,
@@ -300,24 +291,26 @@ fn main() {
 
 	h.set_cards(current_hand_cards);
 	
-	let h = get_best_hand(h);
+	let h = h.get_best_hand();
 	
-	if check_repeating_cards(&h) {
+	if h.check_repeating_cards() {
 		println!("Repeating cards!");
+	} else if h.get_first_five_card_count() != 5 || h.get_card_count() != 5 {
+		println!("First five cards in hand must be set and the rest not set to check for existing combinations");
 	} else {
-		if check_straight(&h) {
-			println!("Straight");
+		if h.check_flush() {
+			if h.check_straight() {
+				println!("Straight Flush");
+			} else {
+				println!("Flush");
+			}
+		} else {
+			if h.check_straight() {
+				println!("Straight");
+			}
 		}
 
-		if check_flush(&h) {
-			println!("Flush");
-		}
-
-		if check_straight_flush(&h) {
-			println!("Straight Flush");
-		}
-
-		if let Some(hc) = get_high_card(&h) {
+		if let Some(hc) = h.get_high_card() {
 			println!("High Card: {}", hc.to_string());
 		}
 	}
