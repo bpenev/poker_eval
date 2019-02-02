@@ -1,36 +1,12 @@
 mod hand;
 
-use hand::Card;
 use hand::Hand;
-use hand::Rank;
-use hand::Suit;
 
 fn main() {
-	let h = Hand {
-		cards: [
-			Card {
-				suit: Suit::CLUBS,
-				rank: Rank::SIX
-			},
-			Card {
-				suit: Suit::SPADES,
-				rank: Rank::SIX
-			},
-			Card {
-				suit: Suit::HEARTS,
-				rank: Rank::EIGHT
-			},
-			Card {
-				suit: Suit::DIAMONDS,
-				rank: Rank::SEVEN
-			},
-			Card {
-				suit: Suit::HEARTS,
-				rank: Rank::TEN
-			}
-		]
-	};
+	let h = Hand::new_from_string("6c 6s 8h 7d 7h".to_string());
 	
+	println!("Hand: {}", h.to_string());
+
 	if h.check_repeating_cards() {
 		println!("Repeating cards!");
 	} else {
@@ -59,6 +35,4 @@ fn main() {
 			}
 		}
 	}
-	
-	println!("Hand: {}", h.to_string());
 }
