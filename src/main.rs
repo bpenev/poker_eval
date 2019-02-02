@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+#[allow(dead_code)]
 enum Suit {
 	CLUBS,
 	DIAMONDS,
@@ -18,6 +19,7 @@ impl Suit {
 	}
 }
 
+#[allow(dead_code)]
 enum Rank {
 	TWO,
 	THREE,
@@ -97,77 +99,34 @@ impl Card {
 }
 
 struct Hand {
-	cards: [Option<Card>; 7]
+	cards: [Card; 5]
 }
 
 impl Hand {
-	fn new() -> Hand {
-		Hand {
-			cards: [None, None, None, None, None, None, None]
-		}
-	}
-
-	fn get_cards(&self) -> &[Option<Card>; 7] {
+	fn get_cards(&self) -> &[Card; 5] {
 		&self.cards
-	}
-
-	fn set_cards(&mut self, cards: [Option<Card>; 7]) {
-		self.cards = cards;
 	}
 	
 	fn to_string(&self) -> String {
 		let mut result_string = "".to_string();
 		let mut space = "".to_string();
 		for card in &self.cards {
-			match card {
-				None => continue,
-				_ => {result_string += &(space + &card.as_ref().unwrap().to_string());}
-			}
+			result_string += &(space + &card.to_string());
 			space = " ".to_string();
 		}
 
 		return result_string;
 	}
 
-	fn get_card_count(&self) -> u8 {
-		let mut count = 0;
-		for card in &self.cards {
-			match card {
-				None => continue,
-				_ => {count += 1;}
-			}
-		}
-
-		return count;
-	}
-
-	fn get_first_five_card_count(&self) -> u8 {
-		let mut count = 0;
-		let mut i = 0;
-		while i < 5 {
-			match &self.cards[i] {
-				None => continue,
-				_ => {count += 1;}
-			}
-
-			i += 1;
-		}
-
-		return count;
-	}
-
 	fn check_repeating_cards(&self) -> bool {
 		let cards = self.get_cards();
-		let mut suit_and_rank_bytes = 0u32;
 		let mut uniq = HashSet::new();
 
 		for card in cards {
-			if let Some(c) = card {
-				let card_byte_int = c.to_byte_int();
-				let card_byte_int_combined = ((card_byte_int.0 as u32) << 13) + card_byte_int.1 as u32;
+			let card_byte_int = card.to_byte_int();
+			let card_byte_int_combined = ((card_byte_int.0 as u32) << 13) + card_byte_int.1 as u32;
 
-				uniq.insert(card_byte_int_combined);
-			}
+			uniq.insert(card_byte_int_combined);
 		}
 
 		if uniq.len() == 5 {
@@ -177,28 +136,6 @@ impl Hand {
 		return true;
 	}
 
-	fn get_high_card(&self) -> &Option<Card> {
-		let cards = self.get_cards();
-		let mut max_card_rank_bits = 0u16;
-		let mut max_card = &cards[0];
-
-		for card in cards {
-			if let Some(c) = card {
-				let card_byte_rank = c.to_byte_int().1;
-				if card_byte_rank > max_card_rank_bits {
-					max_card_rank_bits = card_byte_rank;
-					max_card = card;
-				}
-			}
-		}
-
-		return max_card;
-	}
-
-	fn get_best_hand(&self) -> &Hand {
-		return self;
-	}
-
 	// four, three, #two of a kind
 	fn check_same_kind(&self) -> (bool, bool, u8) {
 		let cards = self.get_cards();
@@ -206,21 +143,19 @@ impl Hand {
 		let mut same = (1,1);
 
 		for card in cards {
-			if let Some(c) = card {
-				let card_byte_int = c.to_byte_int();
-				if rank_bytes.0 | card_byte_int.1 == rank_bytes.0 {
-					rank_bytes.0 = card_byte_int.1;
-					same.0 += 1;
-				} else if same.0 == 1 {
-					rank_bytes.0 |= card_byte_int.1;
-				}
+			let card_byte_int = card.to_byte_int();
+			if rank_bytes.0 | card_byte_int.1 == rank_bytes.0 {
+				rank_bytes.0 = card_byte_int.1;
+				same.0 += 1;
+			} else if same.0 == 1 {
+				rank_bytes.0 |= card_byte_int.1;
+			}
 
-				if rank_bytes.1 | card_byte_int.1 == rank_bytes.1 && same.0 != 1 {
-					rank_bytes.1 = card_byte_int.1;
-					same.1 += 1;
-				} else if same.1 == 1 && same.0 != 1  {
-					rank_bytes.1 |= card_byte_int.1;
-				}
+			if rank_bytes.1 | card_byte_int.1 == rank_bytes.1 && same.0 != 1 {
+				rank_bytes.1 = card_byte_int.1;
+				same.1 += 1;
+			} else if same.1 == 1 && same.0 != 1  {
+				rank_bytes.1 |= card_byte_int.1;
 			}
 		}
 
@@ -244,12 +179,10 @@ impl Hand {
 
 		let mut suit_bytes = 0u8;
 		for card in cards {
-			if let Some(c) = card {
-				let card_byte_int = c.to_byte_int();
-				suit_bytes |= card_byte_int.0;
-				if suit_bytes != card_byte_int.0 {
-					return false;
-				}
+			let card_byte_int = card.to_byte_int();
+			suit_bytes |= card_byte_int.0;
+			if suit_bytes != card_byte_int.0 {
+				return false;
 			}
 		}
 
@@ -261,10 +194,8 @@ impl Hand {
 
 		let mut rank_bytes = 0u16;
 		for card in cards {
-			if let Some(c) = card {
-				let card_byte_int = c.to_byte_int();
-				rank_bytes |= card_byte_int.1;
-			}
+			let card_byte_int = card.to_byte_int();
+			rank_bytes |= card_byte_int.1;
 		}
 
 		let mut straight_pattern = 0b0000000011111u16;
@@ -289,82 +220,59 @@ impl Hand {
 }
 
 fn main() {
-	let mut h = Hand::new();
-
-	let current_hand_cards = [
-		Some(
+	let h = Hand {
+		cards: [
 			Card {
 				suit: Suit::CLUBS,
 				rank: Rank::SIX
-			}
-		),
-		Some(
+			},
 			Card {
 				suit: Suit::SPADES,
 				rank: Rank::SIX
-			}
-		),
-		Some(
+			},
 			Card {
 				suit: Suit::HEARTS,
 				rank: Rank::EIGHT
-			}
-		),
-		Some(
+			},
 			Card {
 				suit: Suit::DIAMONDS,
 				rank: Rank::SEVEN
-			}
-		),
-		Some(
+			},
 			Card {
 				suit: Suit::HEARTS,
 				rank: Rank::TEN
 			}
-		),
-		None,
-		None
-	];
-
-	h.set_cards(current_hand_cards);
-	
-	let h = h.get_best_hand();
+		]
+	};
 	
 	if h.check_repeating_cards() {
 		println!("Repeating cards!");
-	} else if h.get_first_five_card_count() != 5 || h.get_card_count() != 5 {
-		println!("First five cards in hand must be set and the rest not set to check for existing combinations");
 	} else {
-		if let Some(hc) = h.get_high_card() {
-			println!("High Card: {}", hc.rank.to_string());
-
-			if h.check_flush() {
-				if h.check_straight() {
-					println!("Straight Flush");
-				} else {
-					println!("Flush");
-				}
+		if h.check_flush() {
+			if h.check_straight() {
+				println!("Straight Flush");
 			} else {
-				if h.check_straight() {
-					println!("Straight");
-				} else {
-					let same_kind = h.check_same_kind();
-					if same_kind.0 {
-						println!("Four of a kind");
-					} else if same_kind.1 && (same_kind.2 == 1) {
-						println!("Full House");
-					} else if same_kind.1 {
-						println!("Three of a kind");
-					} else if same_kind.2 == 2 {
-						println!("Two Pairs");
-					} else if same_kind.2 == 1 {
-						println!("Pair");
-					}
+				println!("Flush");
+			}
+		} else {
+			if h.check_straight() {
+				println!("Straight");
+			} else {
+				let same_kind = h.check_same_kind();
+				if same_kind.0 {
+					println!("Four of a kind");
+				} else if same_kind.1 && (same_kind.2 == 1) {
+					println!("Full House");
+				} else if same_kind.1 {
+					println!("Three of a kind");
+				} else if same_kind.2 == 2 {
+					println!("Two Pairs");
+				} else if same_kind.2 == 1 {
+					println!("Pair");
 				}
 			}
 		}
 	}
 	
 	println!("Hand: {}", h.to_string());
-	println!("Card Count: {}", h.get_card_count());
 }
