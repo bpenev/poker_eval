@@ -157,14 +157,34 @@ impl Hand {
 }
 
 fn check_royal_flush(hand: &Hand) -> bool {
-	let cards = hand.get_cards();
-
 	if hand.get_first_five_card_count() != 5 || 
 		hand.get_card_count() != 5 {
 		panic!("First five cards in hand must be set and the rest not set to check for existing combinations");
 	} else {
-		return false;
+		return check_flush(hand) && check_straight(hand);
 	}
+}
+
+fn check_flush(hand: &Hand) -> bool {
+	let cards = hand.get_cards();
+
+	let mut suit_bytes = 0b0000u8;
+	let mut i = 0;
+	while i < 5 {
+		let card_byte_int = cards[i].as_ref().unwrap().to_byte_int();
+		suit_bytes |= card_byte_int.0;
+		if suit_bytes != card_byte_int.0 {
+			return false;
+		}
+
+		i += 1;
+	}
+
+	return true;
+}
+
+fn check_straight(hand: &Hand) -> bool {
+	return false;
 }
 
 fn get_best_hand(hand: Hand) -> Hand {
@@ -183,26 +203,26 @@ fn main() {
 		),
 		Some(
 			Card {
-				suit: Suit::CLUBS,
-				rank: Rank::ACE
-			}
-		),
-		Some(
-			Card {
-				suit: Suit::SPADES,
-				rank: Rank::ACE
-			}
-		),
-		Some(
-			Card {
-				suit: Suit::HEARTS,
-				rank: Rank::ACE
+				suit: Suit::DIAMONDS,
+				rank: Rank::KING
 			}
 		),
 		Some(
 			Card {
 				suit: Suit::DIAMONDS,
-				rank: Rank::KING
+				rank: Rank::QUEEN
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::DIAMONDS,
+				rank: Rank::JACK
+			}
+		),
+		Some(
+			Card {
+				suit: Suit::DIAMONDS,
+				rank: Rank::NINE
 			}
 		),
 		None,
@@ -218,5 +238,5 @@ fn main() {
 	}
 	
 	println!("{}", h.to_string());
-	print!("{}", h.get_card_count());
+	println!("{}", h.get_card_count());
 }
