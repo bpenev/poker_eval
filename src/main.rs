@@ -103,10 +103,6 @@ struct Hand {
 }
 
 impl Hand {
-	fn get_cards(&self) -> &[Card; 5] {
-		&self.cards
-	}
-	
 	fn to_string(&self) -> String {
 		let mut result_string = "".to_string();
 		let mut space = "".to_string();
@@ -119,10 +115,9 @@ impl Hand {
 	}
 
 	fn check_repeating_cards(&self) -> bool {
-		let cards = self.get_cards();
 		let mut uniq = HashSet::new();
 
-		for card in cards {
+		for card in &self.cards {
 			let card_byte_int = card.to_byte_int();
 			let card_byte_int_combined = ((card_byte_int.0 as u32) << 13) + card_byte_int.1 as u32;
 
@@ -138,11 +133,10 @@ impl Hand {
 
 	// four, three, #two of a kind
 	fn check_same_kind(&self) -> (bool, bool, u8) {
-		let cards = self.get_cards();
 		let mut rank_bytes = (0u16, 0u16);
 		let mut same = (1,1);
 
-		for card in cards {
+		for card in &self.cards {
 			let card_byte_int = card.to_byte_int();
 			if rank_bytes.0 | card_byte_int.1 == rank_bytes.0 {
 				rank_bytes.0 = card_byte_int.1;
@@ -175,10 +169,8 @@ impl Hand {
 	}
 
 	fn check_flush(&self) -> bool {
-		let cards = self.get_cards();
-
 		let mut suit_bytes = 0u8;
-		for card in cards {
+		for card in &self.cards {
 			let card_byte_int = card.to_byte_int();
 			suit_bytes |= card_byte_int.0;
 			if suit_bytes != card_byte_int.0 {
@@ -190,10 +182,8 @@ impl Hand {
 	}
 
 	fn check_straight(&self) -> bool {
-		let cards = self.get_cards();
-
 		let mut rank_bytes = 0u16;
-		for card in cards {
+		for card in &self.cards {
 			let card_byte_int = card.to_byte_int();
 			rank_bytes |= card_byte_int.1;
 		}
