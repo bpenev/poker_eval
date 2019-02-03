@@ -1,7 +1,8 @@
-use std::collections::HashSet;
-use std::collections::HashMap;
 use std::cmp::Ordering;
 use std::slice::Iter;
+
+use fnv::FnvHashMap;
+use fnv::FnvHashSet;
 
 #[cfg(test)]
 mod tests;
@@ -16,6 +17,7 @@ pub enum Suit {
 }
 
 impl Suit {
+	#[allow(dead_code)]
 	pub fn to_string(&self) -> &str {
 		match self {
 			Suit::CLUBS => 		"c",
@@ -68,6 +70,7 @@ impl PartialOrd for Rank {
 }
 
 impl Rank {
+	#[allow(dead_code)]
 	pub fn to_string(&self) -> &str {
 		match self {
 			Rank::TWO => 	"2",
@@ -208,6 +211,7 @@ impl Card {
 		return (byte_int_suit, byte_int_rank);
 	}
 	
+	#[allow(dead_code)]
 	pub fn to_string(&self) -> String {
 		return format!("{}{}", self.rank.to_string(), self.suit.to_string());
 	}
@@ -262,6 +266,7 @@ impl HandRank {
 	}
 }
 
+#[derive(Copy, Clone)]
 pub struct Hand {
 	pub cards: [Card; 5]
 }
@@ -314,6 +319,7 @@ impl Hand {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn to_string(&self) -> String {
 		let mut result_string = "".to_string();
 		let mut space = "".to_string();
@@ -327,7 +333,7 @@ impl Hand {
 	}
 
 	pub fn check_repeating_cards(&self) -> bool {
-		let mut uniq = HashSet::new();
+		let mut uniq = FnvHashSet::default();
 
 		for card in &self.cards {
 			let card_byte_int = card.to_byte_int();
@@ -343,8 +349,8 @@ impl Hand {
 		return true;
 	}
 
-	pub fn check_same_kind(&self) -> HashMap<u16, u8> {
-		let mut rank_freq = HashMap::with_capacity(5);
+	pub fn check_same_kind(&self) -> FnvHashMap<u16, u8> {
+		let mut rank_freq = FnvHashMap::with_capacity_and_hasher(5, Default::default());
 		for card in &self.cards {
 			let freq = rank_freq.entry(card.to_byte_int().1).or_insert(0);
     		*freq += 1;
@@ -355,33 +361,18 @@ impl Hand {
 
 	#[allow(dead_code)]
 	pub fn check_same_kind_tuple(&self) -> (bool, bool, u8) {
-		let mut freq = (false,false,0);
-		for (_, rank) in self.check_same_kind() {
-			if rank == 4 {
-				freq.0 = true;
-			}
-
-			if rank == 3 {
-				freq.1 = true;
-			}
-
-			if rank == 2 {
-				freq.2 += 1;
-			}
-		}
-
-		return freq;
+		return self.get_freq_tuple(&self.check_same_kind());
 	}
 
 	pub fn check_flush(&self) -> bool {
-		let mut suit_bytes = 0u8;
-
-		for card in &self.cards {
-			let card_byte_int = card.to_byte_int();
-			suit_bytes |= card_byte_int.0;
-			if suit_bytes != card_byte_int.0 {
+		let suit = &self.cards[0].suit;
+		let mut i = 1;
+		while i < 5 {
+			if &self.cards[i].suit != suit {
 				return false;
 			}
+
+			i += 1;
 		}
 
 		return true;
@@ -395,7 +386,7 @@ impl Hand {
 			rank_bytes |= card_byte_int.1;
 		}
 
-		let mut straight_pattern = 0b0000000011111u16;
+		let mut straight_pattern = 0b11111u16;
 		let mut j = 0;
 		while j < 9 {
 			if rank_bytes == straight_pattern {
@@ -427,7 +418,7 @@ impl Hand {
 		return (false, Rank::TWO);
 	}
 
-	fn get_hand_rank(&self) -> (HandRank, Option<HashMap<u16, u8>>) {
+	fn get_hand_rank(&self) -> (HandRank, Option<FnvHashMap<u16, u8>>) {
 		if self.check_flush() {
 			if self.check_straight().0 {
 				return (HandRank::STRAIGHT_FLUSH, None);
@@ -439,21 +430,7 @@ impl Hand {
 				return (HandRank::STRAIGHT, None);
 			} else {
 				let same_kind = self.check_same_kind();
-				// count of 4, 3, 2 freq
-				let mut freq = (false,false,0);
-				for (_, rank) in &same_kind {
-					if *rank == 4 {
-						freq.0 = true;
-					}
-
-					if *rank == 3 {
-						freq.1 = true;
-					}
-
-					if *rank == 2 {
-						freq.2 += 1;
-					}
-				}
+				let freq = self.get_freq_tuple(&same_kind);
 
 				if freq.0 {
 					return (HandRank::FOUR_OF_A_KIND, Some(same_kind));
@@ -470,6 +447,25 @@ impl Hand {
 				}
 			}
 		}
+	}
+
+	fn get_freq_tuple(&self, freq_map: &FnvHashMap<u16, u8>) -> (bool, bool, u8) {
+		let mut freq = (false,false,0);
+		for (_, rank) in freq_map {
+			if *rank == 4 {
+				freq.0 = true;
+			}
+
+			if *rank == 3 {
+				freq.1 = true;
+			}
+
+			if *rank == 2 {
+				freq.2 += 1;
+			}
+		}
+
+		return freq;
 	}
 
 	fn compare(&self, other: &Hand) -> Ordering {

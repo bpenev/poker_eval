@@ -7,3 +7,6 @@ edition = "2018"
 [dependencies]
 rand = "0.6.5"
 chrono = "0.4.6"
+fnv = "1.0.6"
+num_cpus = "1.9.0"
+libmath = "0.2.1"
