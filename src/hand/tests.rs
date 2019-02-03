@@ -126,3 +126,62 @@ fn check_straight_flush() {
     assert_eq!(h.check_flush(), false);
     assert_eq!(h.check_straight(), (true, Rank::TEN));
 }
+
+#[test]
+fn check_hand_compare() {
+	let h = Hand::new_from_string("6c 7c Tc 9c 8c".to_string());
+	let o = Hand::new_from_string("6c 7c Tc 9c 8c".to_string());
+	assert_eq!(h == o, true);
+
+	let h = Hand::new_from_string("6c 7c Ac 9c 8c".to_string());
+	let o = Hand::new_from_string("6c 7c Tc 9c 8c".to_string());
+	assert_eq!(h == o, false);
+
+	let h = Hand::new_from_string("6c 7c Ac 9c 8c".to_string());
+	let o = Hand::new_from_string("6c 7c Tc 9h 8c".to_string());
+	assert_eq!(h == o, false);
+
+	let h = Hand::new_from_string("3h 4c 6c Td Tc".to_string());
+	let o = Hand::new_from_string("3h 4c 6c 7d 9c".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("3h 3s 6c Td Tc".to_string());
+	let o = Hand::new_from_string("3h 4c 6c Td Tc".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("3h Th 6c Td Tc".to_string());
+	let o = Hand::new_from_string("3h 4c 6c Td Tc".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("3h Th 6c Td Tc".to_string());
+	let o = Hand::new_from_string("3h 3c 6c Td Tc".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("3h Th 6c Td Tc".to_string());
+	let o = Hand::new_from_string("3h 4c Ts Td Tc".to_string());
+	assert_eq!(h > o, false);
+
+	let h = Hand::new_from_string("3h Th 6c Td Tc".to_string());
+	let o = Hand::new_from_string("3h 4c 6c Td Tc".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("6s 7s 8c 9s Ts".to_string());
+	let o = Hand::new_from_string("3h Th 6c Td Tc".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("6s 7s 2s 9s Ts".to_string());
+	let o = Hand::new_from_string("6s 7s 8c 9s Ts".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("2s 2c Jh Jd Js".to_string());
+	let o = Hand::new_from_string("6s 7s 2s 9s Ts".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("5s 5c 5h 5d Js".to_string());
+	let o = Hand::new_from_string("2s 2c Jh Jd Js".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("7s 8s 9s Ts Js".to_string());
+	let o = Hand::new_from_string("5s 5c 5h 5d Js".to_string());
+	assert_eq!(h > o, true);
+}

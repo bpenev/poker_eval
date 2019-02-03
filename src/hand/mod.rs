@@ -25,7 +25,7 @@ impl Suit {
 }
 
 #[allow(dead_code)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Rank {
 	TWO,
 	THREE,
@@ -40,6 +40,24 @@ pub enum Rank {
 	QUEEN,
 	KING,
 	ACE
+}
+
+impl Ord for Rank {
+    fn cmp(&self, other: &Self) -> Ordering {
+    	if self.to_int() > other.to_int() {
+    		return Ordering::Greater;
+    	} else if self.to_int() < other.to_int() {
+    		return Ordering::Less;
+    	} else {
+        	return Ordering::Equal;
+        }
+    }
+}
+
+impl PartialOrd for Rank {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Rank {
@@ -60,6 +78,24 @@ impl Rank {
 			Rank::ACE => 	"A"
 		}
 	}
+
+	pub fn to_int(&self) -> u8 {
+		match self {
+			Rank::TWO => 	2,
+			Rank::THREE => 	3,
+			Rank::FOUR => 	4,
+			Rank::FIVE => 	5,
+			Rank::SIX => 	6,
+			Rank::SEVEN => 	7,
+			Rank::EIGHT => 	8,
+			Rank::NINE => 	9,
+			Rank::TEN => 	10,
+			Rank::JACK => 	11,
+			Rank::QUEEN => 	12,
+			Rank::KING => 	13,
+			Rank::ACE => 	14
+		}
+	}
 }
 
 #[derive(Copy, Clone)]
@@ -67,6 +103,32 @@ pub struct Card {
 	pub suit: Suit,
 	pub rank: Rank
 }
+
+impl Ord for Card {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.rank > other.rank {
+        	return Ordering::Greater;
+        } else if self.rank < other.rank {
+        	return Ordering::Less;
+        } else {
+        	return Ordering::Equal;
+        }
+    }
+}
+
+impl PartialOrd for Card {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Card {
+    fn eq(&self, other: &Self) -> bool {
+        return self.suit == other.suit && self.rank == other.rank;
+    }
+}
+
+impl Eq for Card { }
 
 impl Card {
 	pub fn new_from_string(s: String) -> Card {
@@ -137,35 +199,84 @@ impl Card {
 	}
 }
 
-impl Ord for Card {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.rank > other.rank {
-        	return Ordering::Greater;
-        } else if self.rank < other.rank {
-        	return Ordering::Less;
-        } else {
-        	return Ordering::Equal;
-        }
-    }
+#[allow(dead_code)]
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum HandRank {
+	STRAIGHT_FLUSH,
+	FOUR_OF_A_KIND,
+	FULL_HOUSE,
+	FLUSH,
+	STRAIGHT,
+	THREE_OF_A_KIND,
+	TWO_PAIRS,
+	PAIR,
+	HIGH_CARD
 }
 
-impl PartialOrd for Card {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+impl Ord for HandRank {
+	fn cmp(&self, other: &Self) -> Ordering {
+		if self == other {
+			return Ordering::Equal;
+		} else if self.to_int() > other.to_int() {
+			return Ordering::Greater;
+		} else {
+			return Ordering::Less;
+		}
+	}
 }
 
-impl PartialEq for Card {
-    fn eq(&self, other: &Self) -> bool {
-        return self.suit == other.suit && self.rank == other.rank;
-    }
+impl PartialOrd for HandRank {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		Some(self.cmp(other))
+	}
 }
 
-impl Eq for Card { }
+impl HandRank {
+	pub fn to_int(&self) -> u8 {
+		match self {
+			HandRank::STRAIGHT_FLUSH 	=> 1,
+			HandRank::FOUR_OF_A_KIND 	=> 2,
+			HandRank::FULL_HOUSE		=> 3,
+			HandRank::FLUSH 			=> 4,
+			HandRank::STRAIGHT 			=> 5,
+			HandRank::THREE_OF_A_KIND	=> 6,
+			HandRank::TWO_PAIRS 		=> 7,
+			HandRank::PAIR 				=> 8,
+			HandRank::HIGH_CARD 		=> 9
+		}
+	}
+}
 
 pub struct Hand {
 	pub cards: [Card; 5]
 }
+
+impl Ord for Hand {
+	fn cmp(&self, other: &Self) -> Ordering {
+		if self.cards == other.cards {
+			return Ordering::Equal;
+		} else if self.is_greater_than(other) {
+			return Ordering::Greater;
+		} else {
+			return Ordering::Less;
+		}
+	}
+}
+
+impl PartialOrd for Hand {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
+impl PartialEq for Hand {
+   fn eq(&self, other: &Self) -> bool {
+       self.cards.iter().zip(other.cards.iter()).all(|(a,b)| a == b)
+   }
+}
+
+impl Eq for Hand { }
 
 impl Hand {
 	#[allow(dead_code)]
@@ -316,24 +427,41 @@ impl Hand {
 
 		return (false, Rank::TWO);
 	}
+
+	fn get_hand_rank(&self) -> HandRank {
+		if self.check_flush() {
+			if self.check_straight().0 {
+				return HandRank::STRAIGHT_FLUSH;
+			} else {
+				return HandRank::FLUSH;
+			}
+		} else {
+			if self.check_straight().0 {
+				return HandRank::STRAIGHT;
+			} else {
+				let same_kind = self.check_same_kind();
+				if same_kind.0 {
+					return HandRank::FOUR_OF_A_KIND;
+				} else if same_kind.1 && (same_kind.2 == 1) {
+					return HandRank::FULL_HOUSE;
+				} else if same_kind.1 {
+					return HandRank::THREE_OF_A_KIND;
+				} else if same_kind.2 == 2 {
+					return HandRank::TWO_PAIRS;
+				} else if same_kind.2 == 1 {
+					return HandRank::PAIR;
+				} else {
+					return HandRank::HIGH_CARD;
+				}
+			}
+		}
+	}
+
+	fn is_greater_than(&self, other: &Hand) -> bool {
+		if self.get_hand_rank() < other.get_hand_rank() {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
-
-// impl Ord for Hand {
-//    fn cmp(&self, other: &Self) -> Ordering {
-       
-//    }
-// }
-
-//impl PartialOrd for Hand {
-//    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-//        
-//    }
-//}
-
-impl PartialEq for Hand {
-   fn eq(&self, other: &Self) -> bool {
-       self.cards.iter().zip(other.cards.iter()).all(|(a,b)| a == b)
-   }
-}
-
-impl Eq for Hand { }
