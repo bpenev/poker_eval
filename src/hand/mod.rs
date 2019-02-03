@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::collections::HashMap;
 use std::cmp::Ordering;
 
 #[cfg(test)]
@@ -329,52 +330,34 @@ impl Hand {
 		return true;
 	}
 
-	// four, three, #two of a kind
-	pub fn check_same_kind(&self) -> (bool, bool, u8) {
-		let mut rank_bytes = (0u16, 0u16);
-		let mut same = (0,0);
-
+	pub fn check_same_kind(&self) -> HashMap<u16, u8> {
+		let mut rank_freq = HashMap::with_capacity(5);
 		for card in &self.cards {
-			let card_byte_int = card.to_byte_int();
+			let freq = rank_freq.entry(card.to_byte_int().1).or_insert(0);
+    		*freq += 1;
+		}
 
-			if same.0 == 0 {
-				rank_bytes.0 = card_byte_int.1;
-				same.0 += 1;
-			} else if rank_bytes.0 | card_byte_int.1 == rank_bytes.0 {
-				rank_bytes.0 = card_byte_int.1;
-				same.0 += 1;
-			} else {
-				if same.0 == 1 {
-					rank_bytes.0 |= card_byte_int.1;
-				}
+		return rank_freq;
+	}
 
-				if same.1 == 0 {
-					rank_bytes.1 = card_byte_int.1;
-					same.1 += 1;
-				} else if rank_bytes.1 | card_byte_int.1 == rank_bytes.1 {
-					rank_bytes.1 = card_byte_int.1;
-					same.1 += 1;
-				} else {
-					if same.1 == 1 {
-						rank_bytes.1 |= card_byte_int.1;
-					}
-				}
+	#[allow(dead_code)]
+	pub fn check_same_kind_tuple(&self) -> (bool, bool, u8) {
+		let mut freq = (false,false,0);
+		for (_, rank) in self.check_same_kind() {
+			if rank == 4 {
+				freq.0 = true;
+			}
+
+			if rank == 3 {
+				freq.1 = true;
+			}
+
+			if rank == 2 {
+				freq.2 += 1;
 			}
 		}
 
-		if same.0 == 4 || same.1 == 4 {
-			return (true, false, 0);
-		} else if (same.0 == 3 || same.1 == 3) && (same.0 == 2 || same.1 == 2) {
-			return (false, true, 1);
-		} else if same.0 == 3 || same.1 == 3 {
-			return (false, true, 0);
-		} else if same.0 == 2 && same.1 == 2 {
-			return (false, false, 2);
-		} else if same.0 == 2 || same.1 == 2 {
-			return (false, false, 1);
-		}
-
-		return (false, false, 0);
+		return freq;
 	}
 
 	pub fn check_flush(&self) -> bool {
@@ -431,38 +414,54 @@ impl Hand {
 		return (false, Rank::TWO);
 	}
 
-	fn get_hand_rank(&self) -> HandRank {
+	fn get_hand_rank(&self) -> (HandRank, Option<HashMap<u16, u8>>) {
 		if self.check_flush() {
 			if self.check_straight().0 {
-				return HandRank::STRAIGHT_FLUSH;
+				return (HandRank::STRAIGHT_FLUSH, None);
 			} else {
-				return HandRank::FLUSH;
+				return (HandRank::FLUSH, None);
 			}
 		} else {
 			if self.check_straight().0 {
-				return HandRank::STRAIGHT;
+				return (HandRank::STRAIGHT, None);
 			} else {
 				let same_kind = self.check_same_kind();
-				if same_kind.0 {
-					return HandRank::FOUR_OF_A_KIND;
-				} else if same_kind.1 && (same_kind.2 == 1) {
-					return HandRank::FULL_HOUSE;
-				} else if same_kind.1 {
-					return HandRank::THREE_OF_A_KIND;
-				} else if same_kind.2 == 2 {
-					return HandRank::TWO_PAIRS;
-				} else if same_kind.2 == 1 {
-					return HandRank::PAIR;
+				// count of 4, 3, 2 freq
+				let mut freq = (false,false,0);
+				for (_, rank) in &same_kind {
+					if *rank == 4 {
+						freq.0 = true;
+					}
+
+					if *rank == 3 {
+						freq.1 = true;
+					}
+
+					if *rank == 2 {
+						freq.2 += 1;
+					}
+				}
+
+				if freq.0 {
+					return (HandRank::FOUR_OF_A_KIND, Some(same_kind));
+				} else if freq.1 && (freq.2 == 1) {
+					return (HandRank::FULL_HOUSE, Some(same_kind));
+				} else if freq.1 {
+					return (HandRank::THREE_OF_A_KIND, Some(same_kind));
+				} else if freq.2 == 2 {
+					return (HandRank::TWO_PAIRS, Some(same_kind));
+				} else if freq.2 == 1 {
+					return (HandRank::PAIR, Some(same_kind));
 				} else {
-					return HandRank::HIGH_CARD;
+					return (HandRank::HIGH_CARD, Some(same_kind));
 				}
 			}
 		}
 	}
 
 	fn compare(&self, other: &Hand) -> Ordering {
-		let self_hand_rank = self.get_hand_rank();
-		let other_hand_rank = other.get_hand_rank();
+		let self_hand_rank = self.get_hand_rank().0;
+		let other_hand_rank = other.get_hand_rank().0;
 
 		if self_hand_rank < other_hand_rank {
 			return Ordering::Greater;
@@ -492,6 +491,49 @@ impl Hand {
 						return Ordering::Equal;
 					}
 			} else {
+				let mut combos = [(0u16, 0u16), (0u16, 0u16), (0u16, 0u16), (0u16, 0u16)];
+
+				for (scard, sval) in self.get_hand_rank().1.unwrap() {
+					combos[(4-sval) as usize].0 |= scard;
+				}
+
+				for (ocard, oval) in other.get_hand_rank().1.unwrap() {
+					combos[(4-oval) as usize].1 |= ocard;
+				}
+
+				let mut i = 0;
+				let mut j;
+				while i < 4 {
+					if combos[i].0 == 0 {
+						i += 1;
+						continue;
+					}
+
+					if combos[i].0 > combos[i].1 {
+						return Ordering::Greater;
+					} else if combos[i].0 < combos[i].1 {
+						return Ordering::Less;
+					} else {
+						j = i + 1;
+						while j < 4 {
+							if combos[j].0 == 0 {
+								j += 1;
+								continue;
+							}
+
+							if combos[j].0 > combos[j].1 {
+								return Ordering::Greater;
+							} else if combos[j].0 < combos[j].1 {
+								return Ordering::Less;
+							}
+
+							j += 1;
+						}
+					}
+
+					i += 1;
+				}
+
 				return Ordering::Equal;
 			}
 		}
