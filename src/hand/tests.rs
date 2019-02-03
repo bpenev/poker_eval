@@ -129,6 +129,7 @@ fn check_straight_flush() {
 
 #[test]
 fn check_hand_compare() {
+	// this section compares hand ranks without considering card ranks
 	let h = Hand::new_from_string("6c 7c Tc 9c 8c".to_string());
 	let o = Hand::new_from_string("6c 7c Tc 9c 8c".to_string());
 	assert_eq!(h == o, true);
@@ -183,5 +184,30 @@ fn check_hand_compare() {
 
 	let h = Hand::new_from_string("7s 8s 9s Ts Js".to_string());
 	let o = Hand::new_from_string("5s 5c 5h 5d Js".to_string());
+	assert_eq!(h > o, true);
+
+	// this section compares equal hand ranks considering card ranks
+	let h = Hand::new_from_string("4c 5s 7s 9h Ad".to_string());
+	let o = Hand::new_from_string("4c 5s 7s 9h As".to_string());
+	assert_eq!(h == o, true);
+
+	let h = Hand::new_from_string("4c 5s 7s 9h Ad".to_string());
+	let o = Hand::new_from_string("4c 5s 7s 9h Qd".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("4c 5s 7s 9h Ad".to_string());
+	let o = Hand::new_from_string("3h 5h 7c 9s As".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("4c 5s 6s 7h 8d".to_string());
+	let o = Hand::new_from_string("3c 4s 5s 6h 7d".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("4c 8c Tc 7c Qc".to_string());
+	let o = Hand::new_from_string("4c 8c Tc 6c Qc".to_string());
+	assert_eq!(h > o, true);
+
+	let h = Hand::new_from_string("7s 8s 9s Ts Js".to_string());
+	let o = Hand::new_from_string("4s 5s 6s 7s 8s".to_string());
 	assert_eq!(h > o, true);
 }

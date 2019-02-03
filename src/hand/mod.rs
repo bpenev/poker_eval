@@ -44,13 +44,13 @@ pub enum Rank {
 
 impl Ord for Rank {
     fn cmp(&self, other: &Self) -> Ordering {
-    	if self.to_int() > other.to_int() {
-    		return Ordering::Greater;
-    	} else if self.to_int() < other.to_int() {
-    		return Ordering::Less;
-    	} else {
-        	return Ordering::Equal;
-        }
+		if self.to_int() > other.to_int() {
+			return Ordering::Greater;
+		} else if self.to_int() < other.to_int() {
+			return Ordering::Less;
+		} else {
+			return Ordering::Equal;
+		}
     }
 }
 
@@ -256,10 +256,8 @@ impl Ord for Hand {
 	fn cmp(&self, other: &Self) -> Ordering {
 		if self.cards == other.cards {
 			return Ordering::Equal;
-		} else if self.is_greater_than(other) {
-			return Ordering::Greater;
 		} else {
-			return Ordering::Less;
+			return self.compare(other);
 		}
 	}
 }
@@ -271,9 +269,14 @@ impl PartialOrd for Hand {
 }
 
 impl PartialEq for Hand {
-   fn eq(&self, other: &Self) -> bool {
-       self.cards.iter().zip(other.cards.iter()).all(|(a,b)| a == b)
-   }
+	fn eq(&self, other: &Self) -> bool {
+		let exact_match = self.cards.iter().zip(other.cards.iter()).all(|(a,b)| a == b);
+		if exact_match || self.compare(other) == Ordering::Equal {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 
 impl Eq for Hand { }
@@ -457,11 +460,40 @@ impl Hand {
 		}
 	}
 
-	fn is_greater_than(&self, other: &Hand) -> bool {
-		if self.get_hand_rank() < other.get_hand_rank() {
-			return true;
+	fn compare(&self, other: &Hand) -> Ordering {
+		let self_hand_rank = self.get_hand_rank();
+		let other_hand_rank = other.get_hand_rank();
+
+		if self_hand_rank < other_hand_rank {
+			return Ordering::Greater;
+		} else if self_hand_rank > other_hand_rank {
+			return Ordering::Less;
 		} else {
-			return false;
+			if self_hand_rank == HandRank::STRAIGHT_FLUSH ||
+				self_hand_rank == HandRank::FLUSH ||
+				self_hand_rank == HandRank::STRAIGHT ||
+				self_hand_rank == HandRank::HIGH_CARD {
+
+					let mut self_combined_ranks = 0u16;
+					for card in &self.cards {
+						self_combined_ranks |= card.to_byte_int().1;
+					}
+
+					let mut other_combined_ranks = 0u16;
+					for card in &other.cards {
+						other_combined_ranks |= card.to_byte_int().1;
+					}
+
+					if self_combined_ranks > other_combined_ranks {
+						return Ordering::Greater;
+					} else if self_combined_ranks < other_combined_ranks {
+						return Ordering::Less;
+					} else {
+						return Ordering::Equal;
+					}
+			} else {
+				return Ordering::Equal;
+			}
 		}
 	}
 }
