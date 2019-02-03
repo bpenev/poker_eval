@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::collections::HashMap;
 use std::cmp::Ordering;
+use std::slice::Iter;
 
 #[cfg(test)]
 mod tests;
@@ -23,6 +24,11 @@ impl Suit {
 			Suit::SPADES => 	"s"
 		}
 	}
+
+	pub fn iterator() -> Iter<'static, Suit> {
+        static SUIT: [Suit;  4] = [Suit::CLUBS,Suit::DIAMONDS,Suit::HEARTS,Suit::SPADES];
+        SUIT.into_iter()
+    }
 }
 
 #[allow(dead_code)]
@@ -96,6 +102,13 @@ impl Rank {
 			Rank::KING => 	13,
 			Rank::ACE => 	14
 		}
+	}
+
+	pub fn iterator() -> Iter<'static, Rank> {
+        static RANK: [Rank; 13] = [Rank::TWO,Rank::THREE,Rank::FOUR,Rank::FIVE,
+        	Rank::SIX,Rank::SEVEN,Rank::EIGHT,Rank::NINE,Rank::TEN,Rank::JACK,
+        	Rank::QUEEN,Rank::KING,Rank::ACE];
+        RANK.into_iter()
 	}
 }
 
