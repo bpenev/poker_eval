@@ -1,43 +1,60 @@
 mod hand;
 
-extern crate rand;
-extern crate chrono;
-extern crate num_cpus;
-
-use std::env;
-use std::thread;
-use std::sync::mpsc;
-
-use math::round;
-
-use rand::Rng;
-use chrono::DateTime;
-use chrono::Utc;
-
 use hand::Hand;
 use hand::Rank;
 use hand::Suit;
 use hand::Card;
 
+use fnv::FnvHashMap;
+
+use rand::Rng;
+use chrono::DateTime;
+use chrono::Utc;
+
 fn main() {
-	let args: Vec<String> = env::args().collect();
-	if args.len() != 2 {
-		panic!("Only one argument <number of hands> must be supplied!");
-	}
-	let nr_h: usize = args[1].parse().unwrap();
-	let num_of_threads: usize = num_cpus::get();
-
-	let mut hands: Vec<Hand> = Vec::with_capacity(nr_h);
-
-	let mut rng = rand::thread_rng();
-
+	let mut hands: Vec<Hand> = Vec::with_capacity(2598960);
+	
 	let mut deck = Vec::new();
 	for s in Suit::iterator() {
 		for r in Rank::iterator() {
 			deck.push(Card {rank:*r, suit: *s});
 		}
 	}
-
+	
+	for a in 0..deck.len() {
+		for b in a+1..deck.len() {
+			for c in b+1..deck.len() {
+				for d in c+1..deck.len() {
+					for e in d+1..deck.len() {
+						hands.push(Hand {cards: [deck[a],deck[b],deck[c],deck[d],deck[e]]});
+					}
+				}
+			}
+		}
+	}
+	
+	hands.sort();
+	hands.reverse();
+	
+	let mut hands_ranked: Vec<(Hand, u32)> = Vec::with_capacity(2598960);
+	for i in 0..hands.len()-1 {
+		if i == 0 {
+			hands_ranked.push((hands[i], 1));
+		} else if hands[i] < hands[i-1] {
+			hands_ranked.push((hands[i], hands_ranked[hands_ranked.len()-1].1 + 1));
+		} else {
+			hands_ranked.push((hands[i], hands_ranked[hands_ranked.len()-1].1));
+		}
+	}
+	
+	let mut hand_map = FnvHashMap::with_capacity_and_hasher(2598960, Default::default());
+	for h in hands_ranked {
+		hand_map.insert(h.0.to_ordered_string(), h.1);
+	}
+	
+	let nr_h = 1000000;
+	let mut rng = rand::thread_rng();
+	let mut hands_test: Vec<Hand> = Vec::with_capacity(nr_h);
 	let mut i = 0;
 	while i < nr_h {
 		let mut hand_array = [Card{rank: Rank::TWO, suit: Suit::CLUBS}; 5];
@@ -64,70 +81,19 @@ fn main() {
 			j += 1;
 		}
 
-		hands.push(Hand {cards: hand_array});
+		hands_test.push(Hand {cards: hand_array});
 		i += 1;
 	}
-
-	let mut r = 0;
-	for h in &hands {
-		if h.check_repeating_cards() {
-			r += 1;
-		}
-	}
-
-	if r > 0 {
-		panic!("Cards repeat in hands.");
-	}
-
+	
 	let utc_start: DateTime<Utc> = Utc::now();
-
-	let (tx, rx) = mpsc::channel();
-
-	let mut hands_part: Vec<Vec<Hand>> = Vec::new();
-	for _ in 1..num_of_threads {
-		for chunk in hands.chunks(round::ceil(hands.len() as f64 / num_of_threads as f64, 0) as usize) {
-			hands_part.push(chunk.to_vec());
+	let mut hrank = 0;
+	for h in hands_test {
+		if let Some(r) = hand_map.get(&h.to_ordered_string()) {
+			hrank += r;
+		} else {
+			panic!("Hand not in map!");
 		}
 	}
-
-	for i in 0..num_of_threads {
-		let tx_thread = mpsc::Sender::clone(&tx);
-		let chunk_thread = hands_part[i].clone();
-
-		thread::spawn(move || {
-			let mut j = 0;
-			let mut counts = (0,0,0);
-	        while j < chunk_thread.len()-1 {
-				if chunk_thread[j] > chunk_thread[j+1] {
-					counts.0 += 1;
-				} else if chunk_thread[j] < chunk_thread[j+1] {
-					counts.1 += 1;
-				} else {
-					counts.2 += 1;
-				}
-
-				j += 1;
-			}
-
-			tx_thread.send(counts).unwrap();
-	    });
-	}
-
-	let mut counts = (0,0,0);
-	let mut rx_count = 0;
-	for received in rx {
-	    counts.0 += received.0;
-	    counts.1 += received.1;
-	    counts.2 += received.2;
-
-	    rx_count += 1;
-	    if rx_count == num_of_threads {
-	    	break;
-	    }
-	}
-
 	let utc_end: DateTime<Utc> = Utc::now();
-
-	println!("Total Hands: {}\nFirst greater: {}\nSecond greater: {}\nEqual: {}\n{:?}", 
-		nr_h, counts.0, counts.1, counts.2, utc_end.signed_duration_since(utc_start));
+	println!("Total Hands: {}\nAverage Rank: {}\n{:?}", nr_h, hrank as f32 / nr_h as f32, utc_end.signed_duration_since(utc_start));
 }

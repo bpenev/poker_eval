@@ -331,7 +331,15 @@ impl Hand {
 
 		return result_string;
 	}
+	
+	pub fn to_ordered_string(&self) -> String {
+		let mut ordered_cards = self.cards.clone();
+		ordered_cards.sort();
+		let ordered_hand = Hand {cards: ordered_cards};
+		return ordered_hand.to_string();
+	}
 
+	#[allow(dead_code)]
 	pub fn check_repeating_cards(&self) -> bool {
 		let mut uniq = FnvHashSet::default();
 
