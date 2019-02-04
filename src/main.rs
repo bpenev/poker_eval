@@ -37,7 +37,7 @@ fn main() {
 	hands.reverse();
 	
 	let mut hands_ranked: Vec<(Hand, u32)> = Vec::with_capacity(2598960);
-	for i in 0..hands.len()-1 {
+	for i in 0..hands.len() {
 		if i == 0 {
 			hands_ranked.push((hands[i], 1));
 		} else if hands[i] < hands[i-1] {
@@ -54,7 +54,7 @@ fn main() {
 	
 	let nr_h = 1000000;
 	let mut rng = rand::thread_rng();
-	let mut hands_test: Vec<Hand> = Vec::with_capacity(nr_h);
+	let mut hands_test: Vec<String> = Vec::with_capacity(nr_h);
 	let mut i = 0;
 	while i < nr_h {
 		let mut hand_array = [Card{rank: Rank::TWO, suit: Suit::CLUBS}; 5];
@@ -81,19 +81,20 @@ fn main() {
 			j += 1;
 		}
 
-		hands_test.push(Hand {cards: hand_array});
+		hands_test.push((Hand {cards: hand_array}).to_ordered_string());
 		i += 1;
 	}
 	
 	let utc_start: DateTime<Utc> = Utc::now();
 	let mut hrank = 0;
 	for h in hands_test {
-		if let Some(r) = hand_map.get(&h.to_ordered_string()) {
+		if let Some(r) = hand_map.get(&h) {
 			hrank += r;
 		} else {
-			panic!("Hand not in map!");
+			panic!("Hand not in map! {}", h);
 		}
 	}
 	let utc_end: DateTime<Utc> = Utc::now();
-	println!("Total Hands: {}\nAverage Rank: {}\n{:?}", nr_h, hrank as f32 / nr_h as f32, utc_end.signed_duration_since(utc_start));
+	println!("Total Hands: {}\nAverage Rank: {}\nMH/s: {}", nr_h, hrank as f32 / nr_h as f32, 
+		((nr_h/1000000) as f32 / (utc_end.signed_duration_since(utc_start).num_milliseconds() as f32 / 1000 as f32)));
 }
