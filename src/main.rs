@@ -5,8 +5,6 @@ use hand::Rank;
 use hand::Suit;
 use hand::Card;
 
-use fnv::FnvHashMap;
-
 use rand::Rng;
 use chrono::DateTime;
 use chrono::Utc;
@@ -47,14 +45,15 @@ fn main() {
 		}
 	}
 
-	let mut hand_map = FnvHashMap::with_capacity_and_hasher(2598960, Default::default());
-	for h in hands_ranked {
-		hand_map.insert(h.0, h.1);
+	let mut hands_ranked_int = vec![0; 134217728];
+	for i in 0..hands_ranked.len() {
+		let h = Hand::new_from_string(hands_ranked[i].0.to_string());
+		hands_ranked_int[h.to_int()] = hands_ranked[i].1;
 	}
 	
-	let nr_h = 10000000;
+	let nr_h = 10_000_000;
 	let mut rng = rand::thread_rng();
-	let mut hands_test: Vec<String> = Vec::with_capacity(nr_h);
+	let mut hands_test: Vec<Hand> = Vec::with_capacity(nr_h);
 	let mut i = 0;
 	while i < nr_h {
 		let mut hand_array = [Card{rank: Rank::TWO, suit: Suit::CLUBS}; 5];
@@ -81,17 +80,18 @@ fn main() {
 			j += 1;
 		}
 
-		hands_test.push((Hand {cards: hand_array}).to_ordered_string());
+		hands_test.push(Hand {cards: hand_array});
 		i += 1;
 	}
 	
 	let utc_start: DateTime<Utc> = Utc::now();
 	let mut hrank = 0u64;
 	for h in hands_test {
-		if let Some(r) = hand_map.get(&h) {
-			hrank += *r as u64;
+		let h_int = h.to_int();
+		if hands_ranked_int[h_int] > 0 {
+			hrank += hands_ranked_int[h_int] as u64;
 		} else {
-			panic!("Hand not in map! {}", h);
+			panic!("Hand not in map! {}", h.to_ordered_string());
 		}
 	}
 	let utc_end: DateTime<Utc> = Utc::now();

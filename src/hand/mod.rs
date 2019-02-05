@@ -221,6 +221,79 @@ impl Card {
 	pub fn to_string(&self) -> String {
 		return format!("{}{}", self.rank.to_string(), self.suit.to_string());
 	}
+
+	fn to_special_int(&self) -> u32 {
+		match self.suit {
+			Suit::CLUBS => {
+					match self.rank {
+						Rank::TWO => 	1,
+						Rank::THREE => 	2,
+						Rank::FOUR => 	4,
+						Rank::FIVE => 	8,
+						Rank::SIX => 	16,
+						Rank::SEVEN => 	32,
+						Rank::EIGHT => 	64,
+						Rank::NINE => 	128,
+						Rank::TEN => 	256,
+						Rank::JACK => 	512,
+						Rank::QUEEN => 	1024,
+						Rank::KING => 	2048,
+						Rank::ACE => 	4096
+					}
+				},
+			Suit::DIAMONDS => {
+					match self.rank {
+						Rank::TWO => 	8192,
+						Rank::THREE => 	16384,
+						Rank::FOUR => 	32768,
+						Rank::FIVE => 	65536,
+						Rank::SIX => 	131072,
+						Rank::SEVEN => 	262144,
+						Rank::EIGHT => 	524288,
+						Rank::NINE => 	1048576,
+						Rank::TEN => 	2097152,
+						Rank::JACK => 	2781920,
+						Rank::QUEEN => 	4194304,
+						Rank::KING => 	8109704,
+						Rank::ACE => 	8388608
+					}
+				},
+			Suit::HEARTS => {
+					match self.rank {
+						Rank::TWO => 	14486720,
+						Rank::THREE => 	16777216,
+						Rank::FOUR => 	18423568,
+						Rank::FIVE => 	28682752,
+						Rank::SIX => 	33554432,
+						Rank::SEVEN => 	46487664,
+						Rank::EIGHT => 	53141048,
+						Rank::NINE => 	60478720,
+						Rank::TEN => 	63825204,
+						Rank::JACK => 	67108864,
+						Rank::QUEEN => 	75991814,
+						Rank::KING => 	77304384,
+						Rank::ACE => 	82667776
+					}
+				},
+			Suit::SPADES => {
+					match self.rank {
+						Rank::TWO => 	88115619,
+						Rank::THREE => 	90823064,
+						Rank::FOUR => 	90920448,
+						Rank::FIVE => 	99726952,
+						Rank::SIX => 	101451626,
+						Rank::SEVEN => 	104451072,
+						Rank::EIGHT => 	110836741,
+						Rank::NINE => 	113779648,
+						Rank::TEN => 	118997632,
+						Rank::JACK => 	128070680,
+						Rank::QUEEN => 	128184096,
+						Rank::KING => 	130150400,
+						Rank::ACE => 	134086656
+					}
+				}
+		}
+	}
 }
 
 #[allow(dead_code)]
@@ -343,6 +416,15 @@ impl Hand {
 		ordered_cards.sort();
 		let ordered_hand = Hand {cards: ordered_cards};
 		return ordered_hand.to_string();
+	}
+
+	pub fn to_int(&self) -> usize {
+		let mut res = 0usize;
+		for i in 0..5 {
+			res ^= self.cards[i].to_special_int() as usize;
+		}
+
+		return res;
 	}
 
 	#[allow(dead_code)]
