@@ -8,7 +8,7 @@ use fnv::FnvHashSet;
 mod tests;
 
 #[allow(dead_code)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
 pub enum Suit {
 	CLUBS,
 	DIAMONDS,
@@ -128,7 +128,13 @@ impl Ord for Card {
         } else if self.rank < other.rank {
         	return Ordering::Less;
         } else {
-        	return Ordering::Equal;
+        	if self.suit > other.suit {
+        		return Ordering::Greater;
+        	} else if self.suit < other.suit {
+        		return Ordering::Less;
+        	} else {
+        		return Ordering::Equal;
+        	}
         }
     }
 }

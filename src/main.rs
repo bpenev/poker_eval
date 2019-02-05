@@ -36,23 +36,23 @@ fn main() {
 	hands.sort();
 	hands.reverse();
 	
-	let mut hands_ranked: Vec<(Hand, u32)> = Vec::with_capacity(2598960);
+	let mut hands_ranked: Vec<(String, u32)> = Vec::with_capacity(2598960);
 	for i in 0..hands.len() {
 		if i == 0 {
-			hands_ranked.push((hands[i], 1));
+			hands_ranked.push((hands[i].to_ordered_string(), 1));
 		} else if hands[i] < hands[i-1] {
-			hands_ranked.push((hands[i], hands_ranked[hands_ranked.len()-1].1 + 1));
+			hands_ranked.push((hands[i].to_ordered_string(), hands_ranked[hands_ranked.len()-1].1 + 1));
 		} else {
-			hands_ranked.push((hands[i], hands_ranked[hands_ranked.len()-1].1));
+			hands_ranked.push((hands[i].to_ordered_string(), hands_ranked[hands_ranked.len()-1].1));
 		}
 	}
-	
+
 	let mut hand_map = FnvHashMap::with_capacity_and_hasher(2598960, Default::default());
 	for h in hands_ranked {
-		hand_map.insert(h.0.to_ordered_string(), h.1);
+		hand_map.insert(h.0, h.1);
 	}
 	
-	let nr_h = 1000000;
+	let nr_h = 10000000;
 	let mut rng = rand::thread_rng();
 	let mut hands_test: Vec<String> = Vec::with_capacity(nr_h);
 	let mut i = 0;
@@ -95,6 +95,7 @@ fn main() {
 		}
 	}
 	let utc_end: DateTime<Utc> = Utc::now();
-	println!("Total Hands: {}\nAverage Rank: {}\nMH/s: {}", nr_h, hrank as f32 / nr_h as f32, 
-		((nr_h/1000000) as f32 / (utc_end.signed_duration_since(utc_start).num_milliseconds() as f32 / 1000 as f32)));
+	println!("Total Hands: {}\nAverage Rank: {}\nMH/s: {}\n{:?}", nr_h, hrank as f32 / nr_h as f32, 
+		((nr_h/1000000) as f32 / (utc_end.signed_duration_since(utc_start).num_milliseconds() as f32 / 1000 as f32)), 
+		utc_end.signed_duration_since(utc_start));
 }
