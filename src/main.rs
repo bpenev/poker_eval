@@ -85,17 +85,11 @@ fn main() {
 	}
 	
 	let utc_start: DateTime<Utc> = Utc::now();
-	let mut hrank = 0u64;
 	for h in hands_test {
-		let h_int = h.to_int();
-		if hands_ranked_int[h_int] > 0 {
-			hrank += hands_ranked_int[h_int] as u64;
-		} else {
-			panic!("Hand not in map! {}", h.to_ordered_string());
-		}
+		hands_ranked_int[h.to_int()];
 	}
 	let utc_end: DateTime<Utc> = Utc::now();
-	println!("Total Hands: {}\nAverage Rank: {}\nMH/s: {}\n{:?}", nr_h, hrank as f64 / nr_h as f64, 
+	println!("Total Hands: {}\nMH/s: {}\n{:?}", nr_h, 
 		((nr_h as f64/1000000 as f64) / (utc_end.signed_duration_since(utc_start).num_milliseconds() as f64 / 1000 as f64)), 
 		utc_end.signed_duration_since(utc_start));
 }
