@@ -89,6 +89,7 @@ fn main() {
 		hands_ranked_int[h.to_int()];
 	}
 	let utc_end: DateTime<Utc> = Utc::now();
+
 	println!("Total Hands: {}\nMH/s: {}\n{:?}", nr_h, 
 		((nr_h as f64/1000000 as f64) / (utc_end.signed_duration_since(utc_start).num_milliseconds() as f64 / 1000 as f64)), 
 		utc_end.signed_duration_since(utc_start));

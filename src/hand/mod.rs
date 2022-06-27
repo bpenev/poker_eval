@@ -29,7 +29,7 @@ impl Suit {
 
 	pub fn iterator() -> Iter<'static, Suit> {
         static SUIT: [Suit;  4] = [Suit::CLUBS,Suit::DIAMONDS,Suit::HEARTS,Suit::SPADES];
-        SUIT.into_iter()
+        SUIT.iter()
     }
 }
 
@@ -111,7 +111,7 @@ impl Rank {
         static RANK: [Rank; 13] = [Rank::TWO,Rank::THREE,Rank::FOUR,Rank::FIVE,
         	Rank::SIX,Rank::SEVEN,Rank::EIGHT,Rank::NINE,Rank::TEN,Rank::JACK,
         	Rank::QUEEN,Rank::KING,Rank::ACE];
-        RANK.into_iter()
+        RANK.iter()
 	}
 }
 
